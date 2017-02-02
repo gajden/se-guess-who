@@ -4,9 +4,12 @@ from pgmpy.models import BayesianModel
 import pandas as pd
 import numpy as np
 
+input_file = 'artists_data.csv'
+
 def create_data():
 
-    data = open('people_data.csv').readlines()
+    # data = open('people_data.csv').readlines()
+    data = open(input_file).readlines()
 
     res = {}
 
@@ -23,7 +26,6 @@ def create_data():
                 val = '-'
 
             res[feats[feat_idx].rstrip()].append(val)
-
     return res
 
 def writer(data, attrs):
@@ -45,7 +47,7 @@ with open('graph_50.pkl', 'rb') as f:
     graph = pickle.load(f)
 
 new_graph = []
-data = open('people_data.csv').readlines()
+data = open(input_file).readlines()
 feats = data[0].split(',')
 
 for feat in feats:
@@ -57,13 +59,14 @@ model = BayesianModel(new_graph)
 print model.edges()
 
 mle = MaximumLikelihoodEstimator(model, inp)
+print "mle done"
+
 params = mle.estimate_cpd('identity')
 print type(params)
 print [f for f in dir(params) if not f.startswith("_")]
 
 print params.variables
 print params.cardinality
-print params.values[0][0][0][0][0][0][0][0][0][0][0]
 
 writer(params.values, "")
 
