@@ -62,6 +62,9 @@ mle = MaximumLikelihoodEstimator(model, inp)
 print "mle done"
 
 params = mle.estimate_cpd('identity')
+model_dump = open('model_dump.pkl', 'wb')
+pickle.dump(params, model_dump)
+model_dump.close()
 print type(params)
 print [f for f in dir(params) if not f.startswith("_")]
 
