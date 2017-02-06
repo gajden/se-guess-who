@@ -8,7 +8,6 @@ input_file = 'artists_data.csv'
 
 def create_data():
 
-    # data = open('people_data.csv').readlines()
     data = open(input_file).readlines()
 
     res = {}
@@ -28,15 +27,71 @@ def create_data():
             res[feats[feat_idx].rstrip()].append(val)
     return res
 
-def writer(data, attrs):
+
+def probabilities(data, attrs, result):
     if type(data) == np.float64:
-        print attrs+": "+str(data)
+        result.append((attrs, data))
     else:
         length = len(data)
         for i in range(length):
-            writer(data[i], attrs+str(i)+".")
+            probabilities(data[i], attrs+[i], result)
+    return result
+
+def clean_probs(probs):
+    return [p for p in probs if p[1] != 1./15]
 
 
+def ask_question(attr_ind, cpd, prob):
+    attr_name = cpd.variables[attr_ind]
+    print "Select " + attr_name + ":"
+    res_no = 0
+    avail_answers = [x[0][attr_ind] for x in prob]
+    for res in cpd.state_names[attr_name]:
+        if res_no in avail_answers:
+            print str(res_no) + ":  " + res
+        res_no += 1
+    response = raw_input("> ")
+    return int(response)
+
+
+def reduce_probs(probs, response, attr_ind):
+    probs_red = [p for p in probs if p[0][attr_ind] == response]
+    return probs_red
+
+
+def print_temp_results(probs, names):
+    print len(probs)
+    person_probs = []
+    for person_idx in range(15):
+        person_probs.append(sum([p[1] for p in probs if p[0][0] == person_idx]))
+    sum_probs = sum(person_probs)
+    if sum_probs > 0:
+        probs = [p/sum_probs for p in person_probs]
+    result_count = 0
+    if len(probs) == 0:
+        print "\nNO MATCHES"
+        exit(0)
+    print
+    for person_idx in range(15):
+        if probs[person_idx] > 0:
+            result_count += 1
+            print names[person_idx], probs[person_idx]
+    print
+    if result_count < 2:
+        exit(0)
+
+
+def guess(probs, names, cpd):
+    probs = clean_probs(probs)
+    for j in range(1, 8):
+        i = 9-j
+        response = ask_question(i, cpd, probs)
+        probs = reduce_probs(probs, response, i)
+        print_temp_results(probs, names)
+
+
+
+"""
 data = create_data()
 print data
 inp = pd.DataFrame(data=data)
@@ -65,14 +120,18 @@ params = mle.estimate_cpd('identity')
 model_dump = open('model_dump.pkl', 'wb')
 pickle.dump(params, model_dump)
 model_dump.close()
-print type(params)
-print [f for f in dir(params) if not f.startswith("_")]
+"""
 
-print params.variables
-print params.cardinality
 
-writer(params.values, "")
+with open("model_dump_15.pkl", 'rb') as f:
+    params = pickle.load(f)
 
-f_out = open("out.txt", "w")
-f_out.write(str(params))
-f_out.close()
+
+probs = probabilities(params.values, [], [])
+names = params.state_names['identity']
+
+guess(probs, names, params)
+
+# f_out = open("out.txt", "w")
+# f_out.write(str(params))
+# f_out.close()
