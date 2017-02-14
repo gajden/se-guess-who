@@ -4,12 +4,11 @@ from prolog.search_engine_interface import SearchStub
 
 
 class App(tk.Frame):
+    """
+    Simple gui for displaying questions and prolog predictions.
+    """
     def __init__(self, master=tk.Tk(), search_engine=None):
         tk.Frame.__init__(self, master)
-
-        # master.minsize(width=400, height=200)
-        #
-        # master.resizable(width=False, height=False)
 
         self.question_text_var = tk.StringVar()
         self.question_text_var.set('Click "Start game" to begin.')
@@ -80,8 +79,12 @@ class App(tk.Frame):
         self.no_button.grid(row=5, column=2, sticky=tk.E)
 
 
-if __name__ == '__main__':
+def main():
     prolog_engine = SearchStub()
     app = App(search_engine=prolog_engine)
 
     app.mainloop()
+
+
+if __name__ == '__main__':
+    main()

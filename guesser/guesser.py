@@ -1,137 +1,136 @@
 import pickle
-from pgmpy.estimators import MaximumLikelihoodEstimator
-from pgmpy.models import BayesianModel
 import pandas as pd
 import numpy as np
 
-input_file = 'artists_data.csv'
 
-def create_data():
-
-    data = open(input_file).readlines()
-
-    res = {}
-
-    feats = data[0].split(',')
-
-    for feat in feats:
-        res[feat.rstrip()] = []
-
-    for person_idx in range(1, len(data)):
-        personal_data = data[person_idx].split(',')
-        for feat_idx in range(len(personal_data)):
-            val = personal_data[feat_idx].rstrip()
-            if val == '':
-                val = '-'
-
-            res[feats[feat_idx].rstrip()].append(val)
-    return res
+def create_data(input_file='artists_data.csv'):
+    """
+    Parse csv file to format:
+    {
+        "feature1": [
+            "val1",
+            "val2",
+            ...
+        ],
+        "feature2": [
+            "val1",
+            "val2",
+            ...
+        ]
+    }
+    :param input_file: string, path to csv file containing people data.
+    :return: dict, with format as specified above.
+    """
+    df = pd.read_csv(input_file)
+    return {col_name: df[col_name].values for col_name in list(df)}
 
 
 def probabilities(data, attrs, result):
+    """
+    Returns probabilities for given attributes.
+    :param data:
+    :param attrs:
+    :param result:
+    :return:
+    """
+    print data
     if type(data) == np.float64:
         result.append((attrs, data))
     else:
-        length = len(data)
-        for i in range(length):
+        for i in xrange(len(data)):
             probabilities(data[i], attrs+[i], result)
     return result
 
+
 def clean_probs(probs):
+    """
+
+    :param probs:
+    :return:
+    """
     return [p for p in probs if p[1] != 1./15]
 
 
 def ask_question(attr_ind, cpd, prob):
+    """
+
+    :param attr_ind:
+    :param cpd:
+    :param prob:
+    :return:
+    """
     attr_name = cpd.variables[attr_ind]
     print "Select " + attr_name + ":"
-    res_no = 0
     avail_answers = [x[0][attr_ind] for x in prob]
-    for res in cpd.state_names[attr_name]:
+    for res_no, res in enumerate(cpd.state_names[attr_name]):
         if res_no in avail_answers:
             print str(res_no) + ":  " + res
-        res_no += 1
     response = raw_input("> ")
     return int(response)
 
 
 def reduce_probs(probs, response, attr_ind):
+    """
+
+    :param probs:
+    :param response:
+    :param attr_ind:
+    :return:
+    """
     probs_red = [p for p in probs if p[0][attr_ind] == response]
     return probs_red
 
 
-def print_temp_results(probs, names):
-    print len(probs)
-    person_probs = []
-    for person_idx in range(15):
-        person_probs.append(sum([p[1] for p in probs if p[0][0] == person_idx]))
-    sum_probs = sum(person_probs)
-    if sum_probs > 0:
-        probs = [p/sum_probs for p in person_probs]
+def print_temp_results(prob, names):
+    """
+
+    :param prob:
+    :param names:
+    :return:
+    """
+    person_prob = [sum([p[1] for p in prob if p[0][0] == person_id])
+                   for person_id in xrange(len(names))]
+    sum_prob = sum(person_prob)
+    if sum_prob > 0:
+        prob = [p / sum_prob for p in person_prob]
     result_count = 0
-    if len(probs) == 0:
+    if len(prob) == 0:
         print "\nNO MATCHES"
         exit(0)
-    print
     for person_idx in range(15):
-        if probs[person_idx] > 0:
+        if prob[person_idx] > 0:
             result_count += 1
-            print names[person_idx], probs[person_idx]
+            print names[person_idx], prob[person_idx]
     print
     if result_count < 2:
         exit(0)
 
 
-def guess(probs, names, cpd):
-    probs = clean_probs(probs)
+def guess(prob, names, cpd):
+    """
+
+    :param prob:
+    :param names:
+    :param cpd:
+    :return:
+    """
+    prob = clean_probs(prob)
     for j in range(1, 8):
         i = 9-j
-        response = ask_question(i, cpd, probs)
-        probs = reduce_probs(probs, response, i)
-        print_temp_results(probs, names)
+        response = ask_question(i, cpd, prob)
+        prob = reduce_probs(prob, response, i)
+        print_temp_results(prob, names)
 
 
+def main():
+    with open("model_dump_15.pkl", 'rb') as f_in:
+        params = pickle.load(f_in)
 
-"""
-data = create_data()
-print data
-inp = pd.DataFrame(data=data)
+    prob = probabilities(params.values, [], [])
+    names = params.state_names['identity']
 
-
-
-with open('graph_50.pkl', 'rb') as f:
-    graph = pickle.load(f)
-
-new_graph = []
-data = open(input_file).readlines()
-feats = data[0].split(',')
-
-for feat in feats:
-    if feat == 'identity':
-        continue
-    new_graph.append((feat.rstrip(), 'identity'))
-
-model = BayesianModel(new_graph)
-print model.edges()
-
-mle = MaximumLikelihoodEstimator(model, inp)
-print "mle done"
-
-params = mle.estimate_cpd('identity')
-model_dump = open('model_dump.pkl', 'wb')
-pickle.dump(params, model_dump)
-model_dump.close()
-"""
+    guess(prob, names, params)
 
 
-with open("model_dump_15.pkl", 'rb') as f:
-    params = pickle.load(f)
-
-
-probs = probabilities(params.values, [], [])
-names = params.state_names['identity']
-
-guess(probs, names, params)
-
-# f_out = open("out.txt", "w")
-# f_out.write(str(params))
-# f_out.close()
+if __name__ == '__main__':
+    main()

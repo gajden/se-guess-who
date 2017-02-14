@@ -1,16 +1,17 @@
-from pgmpy.models import BayesianModel
-from pgmpy.factors.discrete import TabularCPD
-from pgmpy.estimators import ParameterEstimator, ExhaustiveSearch, BicScore, HillClimbSearch
+from pgmpy.estimators import BicScore, HillClimbSearch
 
 import pandas as pd
 
 
 def main():
+    """
+    Greedy approach to choosing edges in bayes network using hill climb algorithm.
+    :return:
+    """
     data_csv = '/home/joanna/studia/ekspertowe/se-guess-who/data/people_data.csv'
     df = pd.read_csv(data_csv)
 
     nodes = list(df)
-    # nodes = [tuple([node]) for node in nodes]
     print nodes
 
     hc = HillClimbSearch(df, scoring_method=BicScore(df))

@@ -23,7 +23,8 @@ def create_df(root_dir, categories_path, out_cvs):
     printable = set(string.printable)
 
     categories = read_json(categories_path)
-    categories = [filter(lambda x: x in printable, category.replace(",", "_").replace(" ", "_")) for category in categories]
+    categories = [filter(lambda x: x in printable, category.replace(",", "_").replace(" ", "_"))
+                  for category in categories]
 
     for category in categories:
         data[category] = []
@@ -33,7 +34,8 @@ def create_df(root_dir, categories_path, out_cvs):
     for json_file in json_files:
 
         person_data = read_json(json_file)
-        identity = filter(lambda x: x in printable, json_file.split('/')[-1].split('.')[0].replace(",", "_").replace(" ", "_"))
+        identity = filter(lambda x: x in printable,
+                          json_file.split('/')[-1].split('.')[0].replace(",", "_").replace(" ", "_"))
 
         for category in categories:
             if category not in person_data.keys():
@@ -44,11 +46,13 @@ def create_df(root_dir, categories_path, out_cvs):
             else:
                 if type(person_data[category]) == list:
                     if len(person_data[category]) > 0:
-                        data[category].append(filter(lambda x: x in printable, person_data[category][0].replace(",", "").replace(" ", "_")))
+                        data[category].append(filter(lambda x: x in printable,
+                                                     person_data[category][0].replace(",", "").replace(" ", "_")))
                     else:
                         data[category].append(np.NaN)
                 else:
-                    data[category].append(filter(lambda x: x in printable, person_data[category].replace(",", "").replace(" ", "_")))
+                    data[category].append(filter(lambda x: x in printable,
+                                                 person_data[category].replace(",", "").replace(" ", "_")))
 
     print len(data['identity']), len(data['affiliation'])
 

@@ -124,9 +124,6 @@ class WikiDataCrawler(object):
         return os.path.exists(join(self.tmp_dir, '%s.json' % id))
 
 
-# https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q5284&languages=en
-# https://www.wikidata.org/w/api.php?action=wbgetentities&ids=Q5284&languages=en
-
 def generate_ids(min=10000, max=12000):
     ids = []
     for i in xrange(min, max):
